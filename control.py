@@ -1,7 +1,7 @@
 import pyglet
 from pyglet import window, app, shapes
 from pyglet.window import mouse,key
-from pyglet.math import Mat4, Vec3
+from pyglet.math import Mat4, Vec3, Vec2
 
 
 
@@ -43,6 +43,11 @@ class Control:
         pass
 
     def on_mouse_press(self, x, y, button, modifier):
+        
+        nx = (x / self.window.width) * 2 - 1
+        ny = (y / self.window.height) * 2 - 1
+        self.window.mouse = Vec2(nx, ny)
+        
         # TODO:
         pass
 

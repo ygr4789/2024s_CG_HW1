@@ -1,15 +1,14 @@
 import pyglet
-from pyglet import window, app, shapes
+from pyglet import window, app
 from pyglet.window import mouse,key
 
 from pyglet.graphics.shader import Shader, ShaderProgram
 from pyglet.gl import GL_TRIANGLES
-from pyglet.math import Mat4, Vec3
+from pyglet.math import Mat4, Vec3, Vec4
 from pyglet.gl import *
 
 import shader
-from primitives import CustomGroup
-
+from object import Object3D
 
 
 class RenderWindow(pyglet.window.Window):
@@ -34,10 +33,11 @@ class RenderWindow(pyglet.window.Window):
         self.fov = 60
         self.proj_mat = None
 
-        self.shapes = []
+        self.objects: list[Object3D] = []
         self.setup()
 
         self.animate = False
+        self.mouse = None
 
     def setup(self) -> None:
         self.set_minimum_size(width = 400, height = 300)
@@ -62,26 +62,28 @@ class RenderWindow(pyglet.window.Window):
 
     def update(self,dt) -> None:
         view_proj = self.proj_mat @ self.view_mat
-        for i, shape in enumerate(self.shapes):
+        for object in self.objects:
             '''
             Update position/orientation in the scene. In the current setting, 
-            shapes created later rotate faster while positions are not changed.
+            objects created later rotate faster while positions are not changed.
             '''
-            if self.animate:
-                rotate_angle = dt
-                rotate_axis = Vec3(0,0,1)
-                rotate_mat = Mat4.from_rotation(angle = rotate_angle, vector = rotate_axis)
+            if(object.parent is None):
+                object.calc_transform_mat()
                 
-                shape.transform_mat @= rotate_mat
-
-                # # Example) You can control the vertices of shape.
-                # shape.indexed_vertices_list.vertices[0] += 0.5 * dt
-
-            '''
-            Update view and projection matrix. There exist only one view and projection matrix 
-            in the program, so we just assign the same matrices for all the shapes
-            '''
-            shape.shader_program['view_proj'] = view_proj
+            object.group.shader_program['view_proj'] = view_proj
+            
+        if self.mouse is not None:
+            x = self.mouse.x
+            y = self.mouse.y
+            cursor_norm_coord = Vec4(x, y, 0, 1)
+            cursor_world_coord = view_proj.__invert__() @ cursor_norm_coord
+            ray_target = cursor_world_coord.__getattr__('xyz') / cursor_world_coord.w
+            ray_origin = self.cam_eye
+            ray_dir = ray_target - ray_origin
+            plane_normal = Vec3(0, 1, 0)
+            t = -ray_origin.dot(plane_normal)/ray_dir.dot(plane_normal)
+            intersect = ray_origin + ray_dir * t
+            self.objects[0].set_position(intersect)
 
     def on_resize(self, width, height):
         glViewport(0, 0, *self.get_framebuffer_size())
@@ -89,19 +91,13 @@ class RenderWindow(pyglet.window.Window):
             aspect = width/height, z_near=self.z_near, z_far=self.z_far, fov = self.fov)
         return pyglet.event.EVENT_HANDLED
 
-    def add_shape(self, transform, vertice, indice, color):
+    def add_object(self, object:Object3D):
         
         '''
-        Assign a group for each shape
+        Assign a group for each object
         '''
-        shape = CustomGroup(transform, len(self.shapes))
-        shape.indexed_vertices_list = shape.shader_program.vertex_list_indexed(len(vertice)//3, GL_TRIANGLES,
-                        batch = self.batch,
-                        group = shape,
-                        indices = indice,
-                        vertices = ('f', vertice),
-                        colors = ('Bn', color))
-        self.shapes.append(shape)
+        object.set_batch(self.batch)
+        self.objects.append(object)
          
     def run(self):
         pyglet.clock.schedule_interval(self.update, 1/60)

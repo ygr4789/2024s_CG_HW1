@@ -2,9 +2,10 @@ import pyglet
 from pyglet.math import Mat4, Vec3
 
 from render import RenderWindow
-from primitives import Cube,Sphere
+from geometry import *
 from control import Control
 
+from object import Object3D
 
 if __name__ == '__main__':
     width = 1280
@@ -17,18 +18,11 @@ if __name__ == '__main__':
     # Keyboard/Mouse control. Not implemented yet.
     controller = Control(renderer)
 
-    translate_mat1 = Mat4.from_translation(vector=Vec3(x=-2, y=0, z=0))
-    translate_mat2 = Mat4.from_translation(vector=Vec3(x=0, y=0, z=0))
-    translate_mat3 = Mat4.from_translation(vector=Vec3(x=2, y=0, z=0))
-
-    scale_vec = Vec3(x=1, y=1, z=1)
-
-    cube1 = Cube(scale_vec)
-    cube2 = Cube(Vec3(x=1.5, y=1.5, z=1.5))
-    sphere = Sphere(30,30)
-    renderer.add_shape(translate_mat1, cube1.vertices, cube1.indices, cube1.colors)
-    renderer.add_shape(translate_mat2, sphere.vertices, sphere.indices, sphere.colors)
-    renderer.add_shape(translate_mat3, cube2.vertices, cube1.indices, cube1.colors)
+    rod = Rod(width=0.2)
+    rodObj = Object3D(rod)
+    renderer.add_object(rodObj)
+    
+    # rodObj.set_translation(translate_mat1)
 
     #draw shapes
     renderer.run()
