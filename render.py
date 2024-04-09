@@ -98,7 +98,7 @@ class RenderWindow(pyglet.window.Window):
         '''
         object.set_batch(self.batch)
         self.objects.append(object)
-         
+        
     def run(self):
         pyglet.clock.schedule_interval(self.update, 1/60)
         pyglet.app.run()

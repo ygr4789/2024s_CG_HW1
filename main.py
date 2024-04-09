@@ -6,6 +6,7 @@ from geometry import *
 from control import Control
 
 from object import Object3D
+from engine import Engine
 
 if __name__ == '__main__':
     width = 1280
@@ -17,10 +18,7 @@ if __name__ == '__main__':
 
     # Keyboard/Mouse control. Not implemented yet.
     controller = Control(renderer)
-
-    rod = Rod(width=0.2)
-    rodObj = Object3D(rod)
-    renderer.add_object(rodObj)
+    engine = Engine(renderer)
     
     # rodObj.set_translation(translate_mat1)
 

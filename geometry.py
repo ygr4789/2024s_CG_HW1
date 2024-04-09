@@ -19,7 +19,7 @@ class Cube(Geometry):
     default structure of cube
     '''
 
-    def __init__(self, scale=1.0):
+    def __init__(self, scale=Vec3(1.0, 1.0, 1.0)):
         super().__init__()
 
         self.vertices = [-0.5, -0.5, 0.5,

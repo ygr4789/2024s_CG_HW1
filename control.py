@@ -40,13 +40,13 @@ class Control:
 
     def on_mouse_motion(self, x, y, dx, dy):
         # TODO:
+        nx = (x / self.window.width) * 2 - 1
+        ny = (y / self.window.height) * 2 - 1
+        self.window.mouse = Vec2(nx, ny)
         pass
 
     def on_mouse_press(self, x, y, button, modifier):
         
-        nx = (x / self.window.width) * 2 - 1
-        ny = (y / self.window.height) * 2 - 1
-        self.window.mouse = Vec2(nx, ny)
         
         # TODO:
         pass

@@ -7,7 +7,6 @@ from pyglet.gl import *
 import shader
 from geometry import Geometry
 
-
 class CustomGroup(pyglet.graphics.Group):
     __totGroup__ = 0
     '''
@@ -67,10 +66,15 @@ class Object3D:
     def set_position(self, position: Vec3):
         self.translate_mat = Mat4.from_translation(vector=position)
         
+    def add_child(self, object):
+        self.children.append(object)
+        object.parent = self
+        
     def calc_transform_mat(self):
         parent_transform_mat = Mat4()
         if self.parent is not None:
             parent_transform_mat = self.parent.group.transform_mat
+        
         self.group.transform_mat = parent_transform_mat @ self.translate_mat @ self.rotation_mat
         for child in self.children:
             child.calc_transform_mat()
