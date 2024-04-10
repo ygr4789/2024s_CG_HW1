@@ -4,8 +4,8 @@ from pyglet.math import Mat4, Vec3, Vec4
 import math
 from pyglet.gl import *
 
-import shader
-from geometry import Geometry
+import shader.shader as shader
+from geometry import *
 
 class CustomGroup(pyglet.graphics.Group):
     __totGroup__ = 0

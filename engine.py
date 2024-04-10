@@ -9,6 +9,7 @@ from geometry import *
 
 from object import Object3D
 from control import Control
+from design import RobotBody
 
 class IK2Link:
     """
@@ -131,29 +132,19 @@ class Engine:
         self.body_obj = body_obj
         self.renderer.add_object(body_obj)
         
-        # --------------------------- degin ---------------------------
-        
-        head_geo = Cube(translate=(0,1,0),scale=(1.6, 1.0, 1.0))
-        head_obj = Object3D(head_geo, body_tex)
-        body_obj.add_child(head_obj)
-        self.renderer.add_object(head_obj)
-        
-        col_geo = Cube(translate=(0,0.25,0),scale=(0.5, 0.5, 0.5))
-        col_obj = Object3D(col_geo, body_tex)
-        body_obj.add_child(col_obj)
-        self.renderer.add_object(col_obj)
-        
+        # --------------------------- design ---------------------------
+        robot_body = RobotBody(body_obj, self.renderer, body_tex)
         # --------------------------- ----- ---------------------------
         
         for joint_position in self.joint_positions:
-            rod = Rod(self.leg1_length, 0.2, 0.4)
+            rod = Rod(self.leg1_length, 0.3, 0.4)
             rod_obj = Object3D(rod, body_tex)
             rod_obj.set_position(joint_position)
             self.leg1_objs.append(rod_obj)
             self.renderer.add_object(rod_obj)
             
             body_obj.add_child(rod_obj)
-            subrod = Rod(self.leg2_length, 0.2, 0.4)
+            subrod = Rod(self.leg2_length, 0.3, 0.4)
             subrod_obj = Object3D(subrod, body_tex)
             subrod_obj.set_position(Vec3(self.leg1_length, 0.0, 0.0))
             self.leg2_objs.append(subrod_obj)
@@ -234,9 +225,6 @@ class Engine:
             self.leg2_objs[i].set_rotation(R2)
     
     def fixed_update(self, dt):
-        # body_move_dir = (input.target - self.body_ground_position).normalize()
-        # self.body_ground_position += body_move_dir * self.velocity * dt
-        
         input_body_position = self.controller.target
         self.position_system.update(dt, input_body_position)
         output_body_position = self.position_system.y

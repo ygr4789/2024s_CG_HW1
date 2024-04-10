@@ -7,7 +7,6 @@ from pyglet.gl import GL_TRIANGLES
 from pyglet.math import Mat4, Vec3, Vec4
 from pyglet.gl import *
 
-import shader
 from object import Object3D
 
 class RenderWindow(pyglet.window.Window):
@@ -29,7 +28,7 @@ class RenderWindow(pyglet.window.Window):
         '''
         self.z_near = 0.1
         self.z_far = 100
-        self.fov = 60
+        # self.fov = 60
         self.proj_mat = None
         '''
         Uniforms
@@ -54,7 +53,8 @@ class RenderWindow(pyglet.window.Window):
         # 1. Create a view matrix
         self.view_mat = Mat4.look_at(
             self.cam_eye, target=self.cam_target, up=self.cam_vup)
-        # 2. Create a projection matrix 
+        # 2. Create a projection matrix (orthogonal)
+        
         # self.proj_mat = Mat4.perspective_projection(
         #     aspect = self.width/self.height, 
         #     z_near=self.z_near, 

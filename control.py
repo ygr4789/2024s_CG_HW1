@@ -66,11 +66,7 @@ class Control:
         ny = (y / self.window.height) * 2 - 1
         cursor_norm_coord = Vec4(nx, ny, 0, 1)
         cursor_world_coord = ~(self.window.view_proj) @ cursor_norm_coord
-        ray_target = cursor_world_coord.xyz / cursor_world_coord.w
-        
-        # ray_origin = self.window.cam_eye
-        # ray_dir = ray_target - ray_origin
-        ray_origin = ray_target
+        ray_origin = cursor_world_coord.xyz / cursor_world_coord.w
         ray_dir = self.window.cam_target - self.window.cam_eye
         
         plane_normal = Vec3(0, 1, 0)

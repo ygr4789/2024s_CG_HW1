@@ -2,7 +2,7 @@ import pyglet
 from pyglet.math import Mat4, Vec3
 
 from render import RenderWindow
-from geometry import *
+from geometry.geom import *
 from control import Control
 
 from object import Object3D
