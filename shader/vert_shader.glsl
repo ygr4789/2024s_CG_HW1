@@ -1,35 +1,34 @@
 #version 330
 layout(location =0) in vec3 vertices;
-layout(location =1) in vec4 colors;
-layout(location =2) in vec3 normals;
-layout(location =3) in vec2 uvs;
+layout(location =1) in vec3 normals;
+layout(location =2) in vec2 uvs;
 
-out vec4 color;
 out vec2 texCoord;
 out float useTexture;
-out float light;
+
+out vec3 normal;
+out vec3 pos_to_light;
+out vec3 pos_to_eye;
 
 // add a view-projection uniform and multiply it by the vertices
+
+uniform vec3 dot_light;
+uniform vec3 cam_eye;
+
 uniform mat4 model;
 uniform mat4 view_proj;
-uniform vec3 light_dir;
 uniform float textured;
-
-float ambient = 0.3f;
 
 void main()
 {
-    gl_Position = view_proj * model * vec4(vertices, 1.0f); // local->world->vp
+    vec4 world_pos = model * vec4(vertices, 1.0f);
+    gl_Position = view_proj * world_pos; // local->world->vp
     
-    light = 1.0f;
-    if(length(normals) != 0.0f) {
-        vec3 normal = normalize(normals);
-        normal = (model * vec4(normal, 0.0f)).xyz;
-        light = max(dot(normal, light_dir), 0.0f);
-        light += ambient;
-    }
+    pos_to_light = dot_light - world_pos.xyz;
+    pos_to_eye = cam_eye - world_pos.xyz;
     
-    color = colors;
+    normal = (model * vec4(normals, 0.0f)).xyz;
+    
     texCoord = uvs;
     useTexture = textured;
 }

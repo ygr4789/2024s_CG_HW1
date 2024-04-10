@@ -28,13 +28,14 @@ class RenderWindow(pyglet.window.Window):
         '''
         self.z_near = 0.1
         self.z_far = 100
-        # self.fov = 60
+        self.fov = 60
         self.proj_mat = None
         '''
-        Uniforms
+        Uniforms (Lighting)
         '''
         self.view_proj = None
-        self.light_dir = Vec3(-10, 12, 8).normalize()
+        self.dir_light = Vec3(-10, 12, 8).normalize()
+        self.dot_light = Vec3(2, 3, 1)
         
         self.objects: list[Object3D] = []
         self.setup()
@@ -53,19 +54,22 @@ class RenderWindow(pyglet.window.Window):
         # 1. Create a view matrix
         self.view_mat = Mat4.look_at(
             self.cam_eye, target=self.cam_target, up=self.cam_vup)
-        # 2. Create a projection matrix (orthogonal)
+        # 2. Create a projection matrix
         
-        # self.proj_mat = Mat4.perspective_projection(
-        #     aspect = self.width/self.height, 
-        #     z_near=self.z_near, 
-        #     z_far=self.z_far, 
-        #     fov = self.fov)
+        """
+        self.proj_mat = Mat4.perspective_projection(
+            aspect = self.width/self.height, 
+            z_near=self.z_near, 
+            z_far=self.z_far, 
+            fov = self.fov)
+        """
         aspect = self.width/self.height
         H = 12; W = H * aspect
         self.proj_mat = Mat4.orthogonal_projection(
             -W/2,W/2,-H/2,H/2,
             z_near=self.z_near, 
             z_far=self.z_far)
+        # """
         
         # 2. Calc a view_proj matrix
         self.view_proj = self.proj_mat @ self.view_mat
@@ -95,8 +99,10 @@ class RenderWindow(pyglet.window.Window):
             if(object.parent is None):
                 object.calc_transform_mat()
                 
+            # object.group.shader_program['cam_eye'] = self.cam_eye
             object.group.shader_program['view_proj'] = self.view_proj
-            object.group.shader_program['light_dir'] = self.light_dir
+            object.group.shader_program['dir_light'] = self.dir_light
+            object.group.shader_program['dot_light'] = self.dot_light
 
     def fixed_update(self,dt,mouse) -> None:
         pass

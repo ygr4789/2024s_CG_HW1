@@ -9,7 +9,7 @@ from geometry import *
 
 from object import Object3D
 from control import Control
-from design import RobotBody
+from design import RobotBody, RigidSphere
 
 class IK2Link:
     """
@@ -132,8 +132,8 @@ class Engine:
         self.body_obj = body_obj
         self.renderer.add_object(body_obj)
         
-        # --------------------------- design ---------------------------
-        robot_body = RobotBody(body_obj, self.renderer, body_tex)
+        # --------------------------- ----- ---------------------------
+        self.robot_body = RobotBody(body_obj, self.renderer, body_tex)
         # --------------------------- ----- ---------------------------
         
         for joint_position in self.joint_positions:
@@ -159,7 +159,7 @@ class Engine:
         self.floor_obj = floor_obj
         self.renderer.add_object(floor_obj)
         
-        tracker_geo = Sphere(scale=0.3)
+        tracker_geo = Sphere(radius=0.3)
         tracker_obj = Object3D(tracker_geo, color=Vec4(255,0,0,128))
         self.tracker_obj = tracker_obj
         self.renderer.add_object(tracker_obj)
@@ -168,6 +168,9 @@ class Engine:
         h = 0.5
         x = rem/step
         return (x**2)*((x-1)**2)*8*h
+        
+    def attack(self):
+        self.robot_body.attack()
     
     def procedural_animate(self, dt):
         body_T = self.body_obj.translate_mat @ self.body_obj.rotation_mat
@@ -248,5 +251,15 @@ class Engine:
         self.body_obj.set_rotation(body_rot_mat)
         
         self.tracker_obj.set_position(self.controller.cursor)
+        
+        for obj in RigidSphere.obj_list:
+            obj.update(dt)
+        
+        for cmd in self.controller.command_queue:
+            try:
+                getattr(self, cmd)()
+            except:
+                print("Unknown Command")
+            self.controller.command_queue = []
         
         self.procedural_animate(dt)

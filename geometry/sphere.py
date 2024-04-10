@@ -1,80 +1,79 @@
 from pyglet.math import Mat4, Vec3, Vec4
 from geometry.geom import Geometry
 import numpy as np
-
+            
 class Sphere(Geometry):
-    '''
-    default structure of sphere
-    '''
-
-    def __init__(self, stacks=10, slices=10, scale=1.0):
+    def __init__(self, radius=1, widthSegments=32, heightSegments=16, phiStart=0, phiLength=2 * np.pi, thetaStart=0, thetaLength=np.pi):
         super().__init__()
-        self.vertices = []
+
+        self.parameters = {
+            'radius': radius,
+            'widthSegments': widthSegments,
+            'heightSegments': heightSegments,
+            'phiStart': phiStart,
+            'phiLength': phiLength,
+            'thetaStart': thetaStart,
+            'thetaLength': thetaLength
+        }
+
+        widthSegments = int(max(3, np.floor(widthSegments)))
+        heightSegments = int(max(2, np.floor(heightSegments)))
+
+        thetaEnd = min(thetaStart + thetaLength, np.pi)
+
         self.indices = []
+        self.vertices = []
+        self.normals = []
+        self.uvs = []
 
-        num_triangles = 2 * slices * (stacks - 1)
+        index = 0
+        grid = []
 
-        for i in range(stacks):
-            phi0 = 0.5 * np.pi - (i * np.pi) / stacks
-            phi1 = 0.5 * np.pi - ((i + 1) * np.pi) / stacks
-            coord_v0 = 1.0 - float(i) / stacks
-            coord_v1 = 1.0 - float(i + 1) / stacks
+        # generate vertices, normals, and uvs
+        for iy in range(heightSegments + 1):
+            verticesRow = []
 
-            y0 = scale * np.sin(phi0)
-            r0 = scale * np.cos(phi0)
-            y1 = scale * np.sin(phi1)
-            r1 = scale * np.cos(phi1)
-            y2 = y1
-            y3 = y0
+            v = iy / heightSegments
 
-            for j in range(slices):
-                theta0 = (j * 2 * np.pi) / slices
-                theta1 = ((j + 1) * 2 * np.pi) / slices
-                coord_u0 = float(j) / slices
-                coord_u1 = float(j + 1) / slices
+            # special case for the poles
+            uOffset = 0
+            if iy == 0 and thetaStart == 0:
+                uOffset = 0.5 / widthSegments
+            elif iy == heightSegments and thetaEnd == np.pi:
+                uOffset = -0.5 / widthSegments
 
-                x0 = r0 * np.cos(theta0)
-                z0 = r0 * np.sin(-theta0)
-                u0 = coord_u0
-                v0 = coord_v0
-                x1 = r1 * np.cos(theta0)
-                z1 = r1 * np.sin(-theta0)
-                u1 = coord_u0
-                v1 = coord_v1
-                x2 = r1 * np.cos(theta1)
-                z2 = r1 * np.sin(-theta1)
-                u2 = coord_u1
-                v2 = coord_v1
-                x3 = r0 * np.cos(theta1)
-                z3 = r0 * np.sin(-theta1)
-                u3 = coord_u1
-                v3 = coord_v0
+            for ix in range(widthSegments + 1):
+                u = ix / widthSegments
 
-                if (i != stacks - 1):
-                    self.vertices.append(x0)
-                    self.vertices.append(y0)
-                    self.vertices.append(z0)
+                # vertex
+                x = -radius * np.cos(phiStart + u * phiLength) * np.sin(thetaStart + v * thetaLength)
+                y = radius * np.cos(thetaStart + v * thetaLength)
+                z = radius * np.sin(phiStart + u * phiLength) * np.sin(thetaStart + v * thetaLength)
 
-                    self.vertices.append(x1)
-                    self.vertices.append(y1)
-                    self.vertices.append(z1)
+                self.vertices.extend([x, y, z])
 
-                    self.vertices.append(x2)
-                    self.vertices.append(y2)
-                    self.vertices.append(z2)
+                # normal
+                normal = np.array([x, y, z])
+                normal /= np.linalg.norm(normal)
+                self.normals.extend(normal)
 
-                if (i != 0):
-                    self.vertices.append(x2)
-                    self.vertices.append(y2)
-                    self.vertices.append(z2)
+                # uv
+                self.uvs.extend([u + uOffset, 1 - v])
 
-                    self.vertices.append(x3)
-                    self.vertices.append(y3)
-                    self.vertices.append(z3)
+                verticesRow.append(index)
+                index += 1
 
-                    self.vertices.append(x0)
-                    self.vertices.append(y0)
-                    self.vertices.append(z0)
+            grid.append(verticesRow)
 
-        for i in range(num_triangles*3):
-            self.indices.append(i)
+        # indices
+        for iy in range(heightSegments):
+            for ix in range(widthSegments):
+                a = grid[iy][ix + 1]
+                b = grid[iy][ix]
+                c = grid[iy + 1][ix]
+                d = grid[iy + 1][ix + 1]
+
+                if iy != 0 or thetaStart > 0:
+                    self.indices.extend([a, b, d])
+                if iy != heightSegments - 1 or thetaEnd < np.pi:
+                    self.indices.extend([b, c, d])

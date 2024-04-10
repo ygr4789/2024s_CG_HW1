@@ -8,7 +8,7 @@ from render import RenderWindow
 from geometry import *
 
 class RobotBody:
-    def __init__(self, root:Object3D, renderer:RenderWindow, texture:pyglet.image.Texture) -> None:
+    def __init__(self, root:Object3D, renderer:RenderWindow, texture:pyglet.image.Texture):
         # parameters
         support_w = 1.0
         support_h = 0.3
@@ -21,8 +21,7 @@ class RobotBody:
         head_s = Vec3(1.6,1.0,1.0)
         head_offset = col_offset + col_h/2 + head_s.y/2
         
-        arm_s = Vec3(0.8,0.6,0.3)
-        arm_offset = head_s.z/2 + arm_s.z/2 + 0.1
+        arm_offset = head_s.z/2 + Weapon.scale.z/2 + 0.1
         
         # build
         support_geo = Cube(translate=(0,-support_offset,0),scale=(support_w,support_h,support_w))
@@ -44,18 +43,78 @@ class RobotBody:
         renderer.add_object(head_obj)
         
         eye_geo = Cube(translate=(0.55,0.25,0),scale=(0.8, 0.8, 0.4))
-        eye_obj = Object3D(eye_geo, color=Vec4(0,255,255,255))
+        eye_obj = Object3D(eye_geo, color=Vec4(128,255,255,255))
         head_obj.add_child(eye_obj)
         renderer.add_object(eye_obj)
         
-        left_armor_geo = Cube(scale=arm_s)
-        left_armor_obj = Object3D(left_armor_geo, texture)
-        left_armor_obj.set_position((0,0,-arm_offset))
-        head_obj.add_child(left_armor_obj)
-        renderer.add_object(left_armor_obj)
+        self.weapon1 = Weapon(head_obj, renderer, texture)
+        self.weapon1.set_position((0,0,-arm_offset))
         
-        right_armor_geo = Cube(scale=arm_s)
-        right_armor_obj = Object3D(right_armor_geo, texture)
-        right_armor_obj.set_position((0,0,arm_offset))
-        head_obj.add_child(right_armor_obj)
-        renderer.add_object(right_armor_obj)
+        self.weapon2 = Weapon(head_obj, renderer, texture)
+        self.weapon2.set_position((0,0,arm_offset))
+    
+        self.toggle = False
+    
+    def attack(self):
+        if self.toggle:
+            self.weapon1.fire()
+        else:
+            self.weapon2.fire()
+        self.toggle = ~self.toggle
+
+class Weapon(Object3D):
+    scale = Vec3(0.8,0.6,0.4)
+    length = 1
+    fire_speed = 50
+    cooldown = 0.2
+    def __init__(self, parent:Object3D, renderer:RenderWindow, texture: pyglet.image.Texture = None, color: Vec4 = Vec4(255,0,0,255)):
+        weapon_geo = Cube(scale=Weapon.scale)
+        super().__init__(weapon_geo, texture, color)
+        parent.add_child(self)
+        renderer.add_object(self)
+        self.renderer = renderer
+        self.setup()
+        
+    def setup(self):
+        barrel_geo = Cylinder(radiusTop=0.15, radiusBottom=0.12, height=Weapon.length)
+        barrel_obj = Object3D(barrel_geo, color=Vec4(196,196,255,255))
+        barrel_obj.set_position((Weapon.scale.x/2+self.length/2, 0, 0))
+        barrel_obj.set_rotation(Mat4.from_rotation(np.pi/2,Vec3(0,0,1)))
+        self.add_child(barrel_obj)
+        self.renderer.add_object(barrel_obj)
+        
+    def fire(self):
+        muzzle_pos = Vec3(Weapon.scale.x/2+Weapon.length,0,0)
+        t = self.group.transform_mat
+        x0 = (t @ Vec4(*muzzle_pos,1)).xyz
+        y0 = (t @ Vec4(1,0,0,0)).xyz * Weapon.fire_speed
+        self.renderer.add_object(RigidSphere(x0, y0))
+    
+class RigidSphere(Object3D):
+    r = 0.12
+    g = Vec3(0, -9.8, 0)
+    d = 0.01
+    obj_list = []
+    def __init__(self, x0:Vec3, v0:Vec3):
+        rand = np.random.rand(3)
+        rand /= np.linalg.norm(rand)
+        rand = np.ones(3) - rand*0.3
+        rand *= 255
+        rand = rand.astype(int)
+        color = Vec4(*rand,255)
+        
+        bullet_geo = Sphere(radius=self.r)
+        super().__init__(geometry=bullet_geo, color=color)
+        RigidSphere.obj_list.append(self)
+        self.set_position(x0)
+        self.x:Vec3 = x0
+        self.v:Vec3 = v0
+        
+    def update(self, dt):
+        self.x += self.v * dt
+        v_mag = self.v.mag
+        self.v += self.g * dt - self.v * v_mag**2 * self.d * dt
+        if self.x.y < self.r:
+            if self.v.y < 0: self.v.y *= -0.8
+            self.x.y = self.r
+        self.set_position(self.x)

@@ -70,7 +70,6 @@ class Object3D:
             'batch':batch,
             'group':self.group,
             'vertices':('f', self.geometry.vertices),
-            'colors':('Bn', colors),
         }
         if self.geometry.normals is not None:
             args['normals']=('f', self.geometry.normals)
@@ -82,8 +81,7 @@ class Object3D:
             self.group.vlist = self.group.shader_program.vertex_list_indexed(**args)
         else:
             self.group.vlist = self.group.shader_program.vertex_list(**args)
-            
-            
+        self.group.shader_program['color'] = self.color/255
 
     def set_position(self, position: Vec3):
         self.translate_mat = Mat4.from_translation(vector=position)
