@@ -13,7 +13,7 @@ if __name__ == '__main__':
     height = 720
 
     # Render window.
-    renderer = RenderWindow(width, height, "Hello Pyglet", resizable = True)   
+    renderer = RenderWindow(width, height, "Robots Shooting Simulator", resizable = True)   
     renderer.set_location(200, 200)
 
     # Keyboard/Mouse control. Not implemented yet.
