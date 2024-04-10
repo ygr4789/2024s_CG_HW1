@@ -21,7 +21,8 @@ class CustomGroup(pyglet.graphics.Group):
         Create shader program for each shape
         '''
         self.shader_program = shader.create_program(
-            shader.vertex_source_default, shader.fragment_source_default
+            shader.vertex_source_gouraud,
+            shader.fragment_source_gouraud
         )
         self.transform_mat = Mat4()
         self.vlist = None
@@ -63,7 +64,6 @@ class Object3D:
 
     def set_batch(self, batch: pyglet.graphics.Batch):
         count = len(self.geometry.vertices)//3
-        colors = [*self.color] * count 
         args = {
             'count':count,
             'mode':GL_TRIANGLES,

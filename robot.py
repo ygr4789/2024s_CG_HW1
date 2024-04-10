@@ -43,7 +43,7 @@ class RobotBody:
         renderer.add_object(head_obj)
         
         eye_geo = Cube(translate=(0.55,0.25,0),scale=(0.8, 0.8, 0.4))
-        eye_obj = Object3D(eye_geo, color=Vec4(128,255,255,255))
+        eye_obj = Object3D(eye_geo, color=Vec4(128,255,255,128))
         head_obj.add_child(eye_obj)
         renderer.add_object(eye_obj)
         
@@ -77,7 +77,8 @@ class Weapon(Object3D):
         
     def setup(self):
         barrel_geo = Cylinder(radiusTop=0.15, radiusBottom=0.12, height=Weapon.length)
-        barrel_obj = Object3D(barrel_geo, color=Vec4(196,196,255,255))
+        barrel_text = pyglet.image.load("textures/blue.jpg").get_texture()
+        barrel_obj = Object3D(barrel_geo, texture=barrel_text)
         barrel_obj.set_position((Weapon.scale.x/2+self.length/2, 0, 0))
         barrel_obj.set_rotation(Mat4.from_rotation(np.pi/2,Vec3(0,0,1)))
         self.add_child(barrel_obj)

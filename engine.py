@@ -9,7 +9,7 @@ from geometry import *
 
 from object import Object3D
 from control import Control
-from design import RobotBody, RigidSphere
+from robot import RobotBody, RigidSphere
 
 class IK2Link:
     """
@@ -132,10 +132,6 @@ class Engine:
         self.body_obj = body_obj
         self.renderer.add_object(body_obj)
         
-        # --------------------------- ----- ---------------------------
-        self.robot_body = RobotBody(body_obj, self.renderer, body_tex)
-        # --------------------------- ----- ---------------------------
-        
         for joint_position in self.joint_positions:
             rod = Rod(self.leg1_length, 0.3, 0.4)
             rod_obj = Object3D(rod, body_tex)
@@ -163,6 +159,8 @@ class Engine:
         tracker_obj = Object3D(tracker_geo, color=Vec4(255,0,0,128))
         self.tracker_obj = tracker_obj
         self.renderer.add_object(tracker_obj)
+        
+        self.robot_body = RobotBody(body_obj, self.renderer, body_tex)
         
     def step_height(self, rem, step):
         h = 0.5
