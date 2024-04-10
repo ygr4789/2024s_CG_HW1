@@ -10,84 +10,151 @@ import shader
 class Geometry:
     def __init__(self):
         self.vertices = []
-        self.indices = []
-        self.colors = []
+        self.indices = None
+        self.normals = None
+        self.uvs = None
 
+class Plane(Geometry):
+    '''
+    default structure of plane
+    '''
+    def __init__(self, width:float=1.0, height:float=1.0, width_seg:int=1, height_seg:int=1):
+        super().__init__()
+        
+        width_half = width / 2
+        height_half = height / 2
+        gridX = width_seg
+        gridY = height_seg
+        gridX1 = gridX + 1
+        gridY1 = gridY + 1
+        segment_width = width / gridX
+        segment_height = height / gridY
+
+        self.vertices = []
+        self.normals = []
+        self.uvs = []
+        
+        tmp_vertices = []
+        tmp_normals = []
+
+        for iy in range(gridY1):
+            y = iy * segment_height - height_half
+            for ix in range(gridX1):
+                x = ix * segment_width - width_half
+                tmp_vertices.append([ x, - y, 0 ])
+                tmp_normals.append([ 0, 0, 1 ])
+
+        for iy in range(gridY):
+            for ix in range(gridX):
+                a = ix + gridX1 * iy
+                b = ix + gridX1 * ( iy + 1 )
+                c = ( ix + 1 ) + gridX1 * ( iy + 1 )
+                d = ( ix + 1 ) + gridX1 * iy
+                
+                self.vertices.extend(tmp_vertices[a])
+                self.vertices.extend(tmp_vertices[b])
+                self.vertices.extend(tmp_vertices[d])
+                
+                self.vertices.extend(tmp_vertices[b])
+                self.vertices.extend(tmp_vertices[c])
+                self.vertices.extend(tmp_vertices[d])
+                
+                self.uvs.extend([0, 0])
+                self.uvs.extend([0, 1])
+                self.uvs.extend([1, 0])
+                
+                self.uvs.extend([0, 1])
+                self.uvs.extend([1, 1])
+                self.uvs.extend([1, 0])
+        
+        cnt = len(self.vertices) // 3
+        self.normals = [ 0, 0, 1 ] * cnt
 
 class Cube(Geometry):
     '''
     default structure of cube
     '''
-
-    def __init__(self, scale=Vec3(1.0, 1.0, 1.0)):
+    def __init__(self, scale=Vec3(1.0, 1.0, 1.0), translate=Vec3()):
         super().__init__()
 
-        self.vertices = [-0.5, -0.5, 0.5,
-                         0.5, -0.5, 0.5,
-                         0.5, 0.5, 0.5,
-                         -0.5, 0.5, 0.5,
-                         -0.5, -0.5, -0.5,
-                         0.5, -0.5, -0.5,
-                         0.5, 0.5, -0.5,
-                         -0.5, 0.5, -0.5]
-        self.vertices = [scale[idx % 3] * x for idx,
+        self.vertices = [
+            -0.5, -0.5,  -0.5,
+            -0.5,  0.5,  -0.5,
+            0.5, -0.5,  -0.5,
+            -0.5,  0.5,  -0.5,
+            0.5,  0.5,  -0.5,
+            0.5, -0.5,  -0.5,
+
+            -0.5, -0.5,   0.5,
+            0.5, -0.5,   0.5,
+            -0.5,  0.5,   0.5,
+            -0.5,  0.5,   0.5,
+            0.5, -0.5,   0.5,
+            0.5,  0.5,   0.5,
+
+            -0.5,   0.5, -0.5,
+            -0.5,   0.5,  0.5,
+            0.5,   0.5, -0.5,
+            -0.5,   0.5,  0.5,
+            0.5,   0.5,  0.5,
+            0.5,   0.5, -0.5,
+
+            -0.5,  -0.5, -0.5,
+            0.5,  -0.5, -0.5,
+            -0.5,  -0.5,  0.5,
+            -0.5,  -0.5,  0.5,
+            0.5,  -0.5, -0.5,
+            0.5,  -0.5,  0.5,
+
+            -0.5,  -0.5, -0.5,
+            -0.5,  -0.5,  0.5,
+            -0.5,   0.5, -0.5,
+            -0.5,  -0.5,  0.5,
+            -0.5,   0.5,  0.5,
+            -0.5,   0.5, -0.5,
+
+            0.5,  -0.5, -0.5,
+            0.5,   0.5, -0.5,
+            0.5,  -0.5,  0.5,
+            0.5,  -0.5,  0.5,
+            0.5,   0.5, -0.5,
+            0.5,   0.5,  0.5,
+        ]
+        
+        self.uvs = [
+            0, 0,
+            0, 1,
+            1, 0,
+            0, 1,
+            1, 1,
+            1, 0,
+        ] * 6
+        
+        self.vertices = [scale[idx % 3] * x + translate[idx % 3] for idx,
                          x in enumerate(self.vertices)]
 
-        self.indices = [0, 1, 2, 2, 3, 0,
-                        4, 7, 6, 6, 5, 4,
-                        4, 5, 1, 1, 0, 4,
-                        6, 7, 3, 3, 2, 6,
-                        5, 6, 2, 2, 1, 5,
-                        7, 4, 0, 0, 3, 7]
+        self.normals = [0.0, 0.0, -1.0] * 6 \
+                     + [0.0, 0.0, 1.0] * 6 \
+                     + [0.0, 1.0, 0.0] * 6 \
+                     + [0.0, -1.0, 0.0] * 6 \
+                     + [-1.0, 0.0, 0.0] * 6 \
+                     + [1.0, 0.0, 0.0] * 6
 
-        self.colors = (255, 0,  0, 255,
-                       0, 255,  0, 255,
-                       0,   0, 255, 255,
-                       255, 255, 255, 255,
-
-                       255, 0,  0, 255,
-                       0, 255,  0, 255,
-                       0,   0, 255, 255,
-                       255, 255, 255, 255)
-
-
-class Rod(Geometry):
-    def __init__(self, length=1.0, width=0.2):
-        super().__init__()
-
-        self.vertices = [0.0, -width, width,
-                         length, -width, width,
-                         length, width, width,
-                         0.0, width, width,
-                         0.0, -width, -width,
-                         length, -width, -width,
-                         length, width, -width,
-                         0.0, width, -width]
-
-        self.indices = [0, 1, 2, 2, 3, 0,
-                        4, 7, 6, 6, 5, 4,
-                        4, 5, 1, 1, 0, 4,
-                        6, 7, 3, 3, 2, 6,
-                        5, 6, 2, 2, 1, 5,
-                        7, 4, 0, 0, 3, 7]
-
-        self.colors = (255, 0, 0, 255,
-                       255, 0, 0, 255,
-                       255, 0, 0, 255,
-                       255, 0, 0, 255,
-                       255, 0, 0, 255,
-                       255, 0, 0, 255,
-                       255, 0, 0, 255,
-                       255, 0, 0, 255)
-
+class Rod(Cube):
+    def __init__(self, l=1.0, t=0.2, w=0.2):
+        scale = Vec3(l, t, w)
+        translate = Vec3(l/2, 0, 0)
+        super().__init__(scale, translate)
 
 class Sphere(Geometry):
     '''
     default structure of sphere
     '''
 
-    def __init__(self, stacks, slices, scale=1.0):
+    def __init__(self, stacks=10, slices=10, scale=1.0):
         super().__init__()
+        self.vertices = []
+        self.indices = []
 
         num_triangles = 2 * slices * (stacks - 1)
 
@@ -140,13 +207,6 @@ class Sphere(Geometry):
                     self.vertices.append(y2)
                     self.vertices.append(z2)
 
-                    self.colors += (int(math.cos(phi0) * 255),
-                                    int(math.cos(theta0) * 255), int(math.sin(phi0)*255), 255)
-                    self.colors += (int(math.cos(phi0) * 255),
-                                    int(math.cos(theta0) * 255), int(math.sin(phi0)*255), 255)
-                    self.colors += (int(math.cos(phi0) * 255),
-                                    int(math.cos(theta0) * 255), int(math.sin(phi0)*255), 255)
-
                 if (i != 0):
                     self.vertices.append(x2)
                     self.vertices.append(y2)
@@ -159,13 +219,6 @@ class Sphere(Geometry):
                     self.vertices.append(x0)
                     self.vertices.append(y0)
                     self.vertices.append(z0)
-
-                    self.colors += (int(math.cos(phi0) * 255),
-                                    int(math.cos(theta0) * 255), int(math.sin(phi0)*255), 255)
-                    self.colors += (int(math.cos(phi0) * 255),
-                                    int(math.cos(theta0) * 255), int(math.sin(phi0)*255), 255)
-                    self.colors += (int(math.cos(phi0) * 255),
-                                    int(math.cos(theta0) * 255), int(math.sin(phi0)*255), 255)
 
         for i in range(num_triangles*3):
             self.indices.append(i)

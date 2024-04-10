@@ -13,25 +13,31 @@ class CustomGroup(pyglet.graphics.Group):
     To draw multiple 3D shapes in Pyglet, you should make a group for an object.
     '''
 
-    def __init__(self):
+    def __init__(self, texture:pyglet.image.Texture = None):
         super().__init__(CustomGroup.__totGroup__)
         CustomGroup.__totGroup__ += 1
-
+        self.texture = texture
         '''
         Create shader program for each shape
         '''
         self.shader_program = shader.create_program(
             shader.vertex_source_default, shader.fragment_source_default
         )
-
         self.transform_mat = Mat4()
-        self.indexed_vertices_list = None
+        self.vlist = None
         self.shader_program.use()
 
     def set_state(self):
         self.shader_program.use()
         model = self.transform_mat
         self.shader_program['model'] = model
+        self.shader_program['textured'] = self.texture is not None
+        
+        if(self.texture is not None):
+            glActiveTexture(GL_TEXTURE0)
+            glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST)
+            glTexParameterf(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST)
+            glBindTexture(self.texture.target, self.texture.id)
 
     def unset_state(self):
         self.shader_program.stop()
@@ -46,8 +52,9 @@ class CustomGroup(pyglet.graphics.Group):
 
 
 class Object3D:
-    def __init__(self, geometry: Geometry):
-        self.group = CustomGroup()
+    def __init__(self, geometry: Geometry, texture: pyglet.image.Texture = None, color: Vec4 = Vec4(255,0,0,255)):
+        self.group = CustomGroup(texture=texture)
+        self.color = color
         self.geometry = geometry
         self.parent: Object3D = None
         self.children: list[Object3D] = []
@@ -55,16 +62,34 @@ class Object3D:
         self.rotation_mat: Mat4 = Mat4()
 
     def set_batch(self, batch: pyglet.graphics.Batch):
-        self.group.indexed_vertices_list = self.group.shader_program.vertex_list_indexed(len(self.geometry.vertices)//3, GL_TRIANGLES,
-                                                                                         batch=batch,
-                                                                                         group=self.group,
-                                                                                         indices=self.geometry.indices,
-                                                                                         vertices=(
-                                                                                             'f', self.geometry.vertices),
-                                                                                         colors=('Bn', self.geometry.colors))
+        count = len(self.geometry.vertices)//3
+        colors = [*self.color] * count 
+        args = {
+            'count':count,
+            'mode':GL_TRIANGLES,
+            'batch':batch,
+            'group':self.group,
+            'vertices':('f', self.geometry.vertices),
+            'colors':('Bn', colors),
+        }
+        if self.geometry.normals is not None:
+            args['normals']=('f', self.geometry.normals)
+        if self.geometry.uvs is not None:
+            args['uvs']=('f', self.geometry.uvs)
+            
+        if self.geometry.indices is not None:
+            args['indices']=self.geometry.indices
+            self.group.vlist = self.group.shader_program.vertex_list_indexed(**args)
+        else:
+            self.group.vlist = self.group.shader_program.vertex_list(**args)
+            
+            
 
     def set_position(self, position: Vec3):
         self.translate_mat = Mat4.from_translation(vector=position)
+        
+    def set_rotation(self, rotation: Mat4):
+        self.rotation_mat = rotation
         
     def add_child(self, object):
         self.children.append(object)

@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
     # Keyboard/Mouse control. Not implemented yet.
     controller = Control(renderer)
-    engine = Engine(renderer)
+    engine = Engine(renderer, controller)
     
     # rodObj.set_translation(translate_mat1)
 

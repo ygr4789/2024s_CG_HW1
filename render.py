@@ -10,7 +10,6 @@ from pyglet.gl import *
 import shader
 from object import Object3D
 
-
 class RenderWindow(pyglet.window.Window):
     '''
     inherits pyglet.window.Window which is the default render window of Pyglet
@@ -21,7 +20,7 @@ class RenderWindow(pyglet.window.Window):
         '''
         View (camera) parameters
         '''
-        self.cam_eye = Vec3(0,2,4)
+        self.cam_eye = Vec3(20,13,20)
         self.cam_target = Vec3(0,0,0)
         self.cam_vup = Vec3(0,1,0)
         self.view_mat = None
@@ -32,36 +31,62 @@ class RenderWindow(pyglet.window.Window):
         self.z_far = 100
         self.fov = 60
         self.proj_mat = None
-
+        '''
+        Uniforms
+        '''
+        self.view_proj = None
+        self.light_dir = Vec3(-10, 12, 8).normalize()
+        
         self.objects: list[Object3D] = []
         self.setup()
 
-        self.animate = False
-        self.mouse = None
 
     def setup(self) -> None:
         self.set_minimum_size(width = 400, height = 300)
         self.set_mouse_visible(True)
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glEnable(GL_DEPTH_TEST)
         glEnable(GL_CULL_FACE)
-
+        self.calc_matrices()
+        
+    def calc_matrices(self) -> None:
         # 1. Create a view matrix
         self.view_mat = Mat4.look_at(
             self.cam_eye, target=self.cam_target, up=self.cam_vup)
-        
         # 2. Create a projection matrix 
-        self.proj_mat = Mat4.perspective_projection(
-            aspect = self.width/self.height, 
+        # self.proj_mat = Mat4.perspective_projection(
+        #     aspect = self.width/self.height, 
+        #     z_near=self.z_near, 
+        #     z_far=self.z_far, 
+        #     fov = self.fov)
+        aspect = self.width/self.height
+        H = 12; W = H * aspect
+        self.proj_mat = Mat4.orthogonal_projection(
+            -W/2,W/2,-H/2,H/2,
             z_near=self.z_near, 
-            z_far=self.z_far, 
-            fov = self.fov)
+            z_far=self.z_far)
+        
+        # 2. Calc a view_proj matrix
+        self.view_proj = self.proj_mat @ self.view_mat
 
     def on_draw(self) -> None:
         self.clear()
         self.batch.draw()
+        
+    def on_resize(self, width, height):
+        glViewport(0, 0, *self.get_framebuffer_size())
+        self.calc_matrices()
+        return pyglet.event.EVENT_HANDLED
+        
+    def add_object(self, object:Object3D):
+        '''
+        Assign a group for each object
+        '''
+        object.set_batch(self.batch)
+        self.objects.append(object)
 
     def update(self,dt) -> None:
-        view_proj = self.proj_mat @ self.view_mat
         for object in self.objects:
             '''
             Update position/orientation in the scene. In the current setting, 
@@ -70,37 +95,13 @@ class RenderWindow(pyglet.window.Window):
             if(object.parent is None):
                 object.calc_transform_mat()
                 
-            object.group.shader_program['view_proj'] = view_proj
-            
-        if self.mouse is not None:
-            x = self.mouse.x
-            y = self.mouse.y
-            cursor_norm_coord = Vec4(x, y, 0, 1)
-            cursor_world_coord = view_proj.__invert__() @ cursor_norm_coord
-            ray_target = cursor_world_coord.__getattr__('xyz') / cursor_world_coord.w
-            ray_origin = self.cam_eye
-            ray_dir = ray_target - ray_origin
-            plane_normal = Vec3(0, 1, 0)
-            t = -ray_origin.dot(plane_normal)/ray_dir.dot(plane_normal)
-            intersect = ray_origin + ray_dir * t
-            self.objects[0].set_position(intersect)
+            object.group.shader_program['view_proj'] = self.view_proj
+            object.group.shader_program['light_dir'] = self.light_dir
 
-    def on_resize(self, width, height):
-        glViewport(0, 0, *self.get_framebuffer_size())
-        self.proj_mat = Mat4.perspective_projection(
-            aspect = width/height, z_near=self.z_near, z_far=self.z_far, fov = self.fov)
-        return pyglet.event.EVENT_HANDLED
-
-    def add_object(self, object:Object3D):
-        
-        '''
-        Assign a group for each object
-        '''
-        object.set_batch(self.batch)
-        self.objects.append(object)
+    def fixed_update(self,dt,mouse) -> None:
+        pass
         
     def run(self):
+        pyglet.clock.schedule_interval(self.fixed_update, 1/120)
         pyglet.clock.schedule_interval(self.update, 1/60)
         pyglet.app.run()
-
-    
