@@ -5,6 +5,7 @@ import numpy as np
 
 from object import Object3D
 from render import RenderWindow
+from ulility import SecondOrderDynamics
 from geometry import *
 
 class RobotBody:
@@ -61,6 +62,10 @@ class RobotBody:
         else:
             self.weapon2.fire()
         self.toggle = ~self.toggle
+        
+    def update(self,dt):
+        self.weapon1.update(dt)
+        self.weapon2.update(dt)
 
 class Weapon(Object3D):
     scale = Vec3(0.8,0.6,0.4)
@@ -73,6 +78,7 @@ class Weapon(Object3D):
         parent.add_child(self)
         renderer.add_object(self)
         self.renderer = renderer
+        self.system = SecondOrderDynamics(0.5,0.7,1.0,0)
         self.setup()
         
     def setup(self):
@@ -90,6 +96,11 @@ class Weapon(Object3D):
         x0 = (t @ Vec4(*muzzle_pos,1)).xyz
         y0 = (t @ Vec4(1,0,0,0)).xyz * Weapon.fire_speed
         self.renderer.add_object(RigidSphere(x0, y0))
+        self.system.yd = 3.0
+    
+    def update(self, dt):
+        self.system.update(dt, 0)
+        self.set_rotation(Mat4.from_rotation(self.system.y,Vec3(0,0,1)))
     
 class RigidSphere(Object3D):
     r = 0.12

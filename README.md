@@ -1,7 +1,6 @@
 
 ## Requirements
-
-This is a baseline code for **SNU Computer Graphics (4190.410)**.
+This is a programming assignmet for **SNU Computer Graphics (4190.410)**.
 This code uses [Pyglet](https://github.com/pyglet/pyglet) which is a cross-platform windowing library under Python 3.8+. 
 Supported platforms are:
 
@@ -14,12 +13,14 @@ Pyglet is installable from PyPI:
 
     pip install --upgrade --user pyglet
 
-And then clone this repository:
-
-    git clone https://github.com/IntelligentMOtionlab/SNU_ComputerGraphics.git
-
-You can implement the code easily by:
+You can run the code easily by:
 
     python3 main.py
-You can then see the result, as shown in the image below.
-![image](https://github.com/IntelligentMOtionlab/SNU_ComputerGraphics/assets/132187116/38b872fd-b818-4731-b025-d264173b974c)
+    
+## Instruction
+
+| Input | Response |
+|---|---|
+| cursor | The robot looks at your cursor. If you move the cursor to a different location, the robot will rotate to the cursor direction. |
+| right click | The robot moves toward the specified location. If the button is pressed, the target point is updated to the cursor's position. |
+| left click | The robot fires bullets from its muzzle. Each click fires one bullet alternately left and right. |
