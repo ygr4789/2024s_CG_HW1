@@ -8,6 +8,7 @@ from pyglet.math import Mat4, Vec3, Vec4
 from pyglet.gl import *
 
 from object import Object3D
+from object_line import ObjectLine
 
 class RenderWindow(pyglet.window.Window):
     '''
@@ -83,7 +84,7 @@ class RenderWindow(pyglet.window.Window):
         self.calc_matrices()
         return pyglet.event.EVENT_HANDLED
         
-    def add_object(self, object:Object3D):
+    def add_object(self, object:Object3D|ObjectLine):
         '''
         Assign a group for each object
         '''
@@ -96,13 +97,16 @@ class RenderWindow(pyglet.window.Window):
             Update position/orientation in the scene. In the current setting, 
             objects created later rotate faster while positions are not changed.
             '''
+            if(object.group is None):
+                self.objects.remove(object)
+                continue
             if(object.parent is None):
                 object.calc_transform_mat()
                 
-            # object.group.shader_program['cam_eye'] = self.cam_eye
             object.group.shader_program['view_proj'] = self.view_proj
-            object.group.shader_program['dir_light'] = self.dir_light
-            object.group.shader_program['dot_light'] = self.dot_light
+            if isinstance(object, Object3D):
+                object.group.shader_program['dir_light'] = self.dir_light
+                object.group.shader_program['dot_light'] = self.dot_light
 
     def fixed_update(self,dt,mouse) -> None:
         pass

@@ -31,15 +31,15 @@ void main()
     
     vec3 pos_to_light_dir = normalize(pos_to_light);
     vec3 pos_to_eye_dir = normalize(pos_to_eye);
-    vec3 half = normalize(pos_to_eye_dir + pos_to_light_dir);
+    vec3 half_dir = normalize(pos_to_eye_dir + pos_to_light_dir);
     
     float light1 = max(dot(normal, dir_light), 0.0f);
     float light2 = max(dot(normal, pos_to_light_dir), 0.0f);
     
-    float glare = dot(normal, half);
+    float glare = dot(normal, half_dir);
     float specular = 0.0f;
     if (glare > 0.0f) {
-        specular = pow(dot(normal, half), shininess);
+        specular = pow(dot(normal, half_dir), shininess);
     }
     
     light = ambient + light1*0.5 + light2*0.5 + specular;

@@ -5,6 +5,8 @@ vertex_source_gouraud = open('shader/vert_shader_gouraud.glsl', 'r').read()
 fragment_source_gouraud = open('shader/frag_shader_gouraud.glsl', 'r').read()
 vertex_source_phong = open('shader/vert_shader_phong.glsl', 'r').read()
 fragment_source_phong = open('shader/frag_shader_phong.glsl', 'r').read()
+vertex_source_simple = open('shader/vert_shader_simple.glsl', 'r').read()
+fragment_source_simple = open('shader/frag_shader_simple.glsl', 'r').read()
 
 def create_program(vs_source, fs_source):
     # compile the vertex and fragment sources to a shader program

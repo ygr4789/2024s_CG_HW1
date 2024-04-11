@@ -187,7 +187,7 @@ class Engine:
         
         self.tracker_obj.set_position(self.controller.cursor)
         
-        for obj in RigidSphere.obj_list:
+        for obj in RigidSphere.instance_list:
             obj.update(dt)
         
         for cmd in self.controller.command_queue:

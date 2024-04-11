@@ -4,6 +4,7 @@ from pyglet.math import Mat4, Vec3, Vec4
 import numpy as np
 
 from object import Object3D
+from object_line import ObjectLine
 from render import RenderWindow
 from ulility import SecondOrderDynamics
 from geometry import *
@@ -78,7 +79,7 @@ class Weapon(Object3D):
         parent.add_child(self)
         renderer.add_object(self)
         self.renderer = renderer
-        self.system = SecondOrderDynamics(0.5,0.7,1.0,0)
+        self.system = SecondOrderDynamics(1.0,0.2,1.0,0)
         self.setup()
         
     def setup(self):
@@ -95,18 +96,20 @@ class Weapon(Object3D):
         t = self.group.transform_mat
         x0 = (t @ Vec4(*muzzle_pos,1)).xyz
         y0 = (t @ Vec4(1,0,0,0)).xyz * Weapon.fire_speed
-        self.renderer.add_object(RigidSphere(x0, y0))
+        bullet = Bullet(x0, y0)
+        self.renderer.add_object(bullet)
+        self.renderer.add_object(bullet.trajectory)
         self.system.yd = 3.0
     
     def update(self, dt):
         self.system.update(dt, 0)
         self.set_rotation(Mat4.from_rotation(self.system.y,Vec3(0,0,1)))
-    
+
 class RigidSphere(Object3D):
     r = 0.12
     g = Vec3(0, -9.8, 0)
     d = 0.01
-    obj_list = []
+    instance_list = []
     def __init__(self, x0:Vec3, v0:Vec3):
         rand = np.random.rand(3)
         rand /= np.linalg.norm(rand)
@@ -117,7 +120,7 @@ class RigidSphere(Object3D):
         
         bullet_geo = Sphere(radius=self.r)
         super().__init__(geometry=bullet_geo, color=color)
-        RigidSphere.obj_list.append(self)
+        RigidSphere.instance_list.append(self)
         self.set_position(x0)
         self.x:Vec3 = x0
         self.v:Vec3 = v0
@@ -130,3 +133,32 @@ class RigidSphere(Object3D):
             if self.v.y < 0: self.v.y *= -0.8
             self.x.y = self.r
         self.set_position(self.x)
+        
+    def delete(self):
+        RigidSphere.instance_list.remove(self)
+        super().delete()
+        
+
+class Bullet(RigidSphere):
+    dur = 3.0
+    def __init__(self, x0: Vec3, v0: Vec3):
+        super().__init__(x0, v0)
+        self.lifetime = 0
+        self.trajectory = ObjectLine([*x0],self.color)
+        
+    def update(self, dt):
+        super().update(dt)
+        self.lifetime += dt
+        s = self.lifetime / Bullet.dur
+        s = 1 - s ** 3
+        self.rotation_mat = Mat4().scale(Vec3(s,s,s))
+        self.trajectory.vertices.extend(self.x)
+        if len(self.trajectory.vertices) > 3 * 20:
+            self.trajectory.vertices = self.trajectory.vertices[3:]
+        self.trajectory.update()
+        if self.lifetime > Bullet.dur:
+            self.delete()
+            
+    def delete(self):
+        super().delete()
+        self.trajectory.delete()

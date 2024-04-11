@@ -63,6 +63,7 @@ class Object3D:
         self.rotation_mat: Mat4 = Mat4()
 
     def set_batch(self, batch: pyglet.graphics.Batch):
+        glLineWidth(10)
         count = len(self.geometry.vertices)//3
         args = {
             'count':count,
@@ -92,6 +93,12 @@ class Object3D:
     def add_child(self, object):
         self.children.append(object)
         object.parent = self
+        
+    def delete(self):
+        self.group.shader_program.delete()
+        self.group.shader_program = None
+        self.group.visible = False
+        self.group = None
         
     def calc_transform_mat(self):
         parent_transform_mat = Mat4()
